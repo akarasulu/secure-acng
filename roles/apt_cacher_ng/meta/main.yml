@@ -1,7 +1,0 @@
-galaxy_info:
-  role_name: apt_cacher_ng
-  author: secure-acng
-  description: Configure apt-cacher-ng with HTTPS upstream backends and remaps.
-  license: MIT
-  min_ansible_version: "2.14"
-dependencies: []

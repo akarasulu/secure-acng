@@ -17,6 +17,16 @@ The lab brings up one server and four client VMs:
 
 For the underlying secure ACNG patterns, see [Secure-apt-cacher-ng-setup.md](Secure-apt-cacher-ng-setup.md).
 
+## Nested Collection
+
+The Ansible roles for this lab live in the sibling `nested` collection checkout:
+
+```text
+../nested/roles/
+```
+
+Keep this repository checked out next to `nested`. The local `ansible.cfg` points `roles_path` at `../nested/roles`, so the playbooks can keep using the short role names while the reusable role implementations live in the collection project.
+
 ## Requirements
 
 Run this on a Linux host with virtualization support. The lab supports these Vagrant providers:

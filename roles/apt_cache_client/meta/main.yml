@@ -1,7 +1,0 @@
-galaxy_info:
-  role_name: apt_cache_client
-  author: secure-acng
-  description: Configure Debian clients for one of the secure apt-cacher-ng lab modes.
-  license: MIT
-  min_ansible_version: "2.14"
-dependencies: []

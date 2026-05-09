@@ -42,7 +42,7 @@ Phase 4: clients move from apt-cacher-ng URLs to aptly published URLs
 
 Do not switch clients to aptly repositories until aptly publishing and repository signing are configured. Do not use `trusted=yes` as a shortcut.
 
-The repository must also define reusable Ansible roles that can later be moved into the `nested` Ansible collection. Keep roles general-purpose and variable-driven. Avoid hard-coding the lab name except in inventory/group vars/defaults.
+The reusable Ansible roles for this lab live in the sibling `nested` Ansible collection checkout at `../nested/roles`. Keep roles general-purpose and variable-driven. Avoid hard-coding the lab name except in inventory/group vars/defaults.
 
 Important target: `provcont` must have one apt-cacher-ng configuration and one apt-cache nginx reverse proxy configuration that support all client scenarios at the same time. Do not reconfigure, reset, switch, or toggle the server between client tests. The clients vary; the server stays stable.
 
@@ -85,7 +85,7 @@ playbooks/
   apt_cache_clients.yml
   aptly_server.yml
   validate.yml
-roles/
+../nested/roles/
   apt_cacher_ng/
   nginx_acng_reverse_proxy/
   aptly_server/
@@ -152,10 +152,10 @@ Create `ansible.cfg` in the repo root with repository-local defaults:
 ```ini
 [defaults]
 inventory = inventory/hosts.yml
-roles_path = roles
+roles_path = ../nested/roles
 host_key_checking = False
 retry_files_enabled = False
-stdout_callback = yaml
+stdout_callback = default
 interpreter_python = auto_silent
 
 [ssh_connection]
