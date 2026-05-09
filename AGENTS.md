@@ -229,7 +229,7 @@ Recommended static private IPs:
 ```text
 provcont                    192.168.200.2
 client-http-https-path      192.168.200.3
-client-http-proxy           192.168.200.4
+client-http-proxy           192.168.200.7
 client-http-internal-domain 192.168.200.5
 client-https-internal-domain 192.168.200.6
 ```
@@ -767,7 +767,7 @@ apt_cache_servers:
 aptly_servers:
   hosts:
     aptly01:
-      ansible_host: 192.168.200.7
+      ansible_host: 192.168.200.2
 ```
 
 In that topology:
@@ -776,7 +776,7 @@ In that topology:
 apt_cache_domain: apt-cache.provcont.lan
 apt_cache_server_ip: 192.168.200.2
 aptly_domain: aptly.provcont.lan
-aptly_server_ip: 192.168.200.7
+aptly_server_ip: 192.168.200.2
 aptly_acng_proxy_url: http://apt-cache.provcont.lan:3142
 ```
 

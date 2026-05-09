@@ -7,7 +7,7 @@ LAB_HOST_IP = "192.168.200.1"
 MACHINES = {
   "provcont" => "192.168.200.2",
   "client-http-https-path" => "192.168.200.3",
-  "client-http-proxy" => "192.168.200.4",
+  "client-http-proxy" => "192.168.200.7",
   "client-http-internal-domain" => "192.168.200.5",
   "client-https-internal-domain" => "192.168.200.6"
 }.freeze

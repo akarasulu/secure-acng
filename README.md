@@ -8,7 +8,7 @@ The lab brings up one server and four client VMs:
 | --- | --- | --- |
 | `provcont` | `192.168.200.2` | Runs `apt-cacher-ng`, nginx TLS proxying, and aptly |
 | `client-http-https-path` | `192.168.200.3` | Tests ACNG `HTTPS///` URLs over HTTP |
-| `client-http-proxy` | `192.168.200.4` | Tests formal `Acquire::http::Proxy` mode |
+| `client-http-proxy` | `192.168.200.7` | Tests formal `Acquire::http::Proxy` mode |
 | `client-http-internal-domain` | `192.168.200.5` | Tests clean HTTP URLs through `apt-cache.provcont.lan` |
 | `client-https-internal-domain` | `192.168.200.6` | Tests clean HTTPS URLs through `apt-cache.provcont.lan` |
 
