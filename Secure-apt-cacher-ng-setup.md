@@ -41,13 +41,13 @@ Switching clients directly to upstream HTTPS repositories is a natural reflex, b
 Use a formal APT proxy configuration like this:
 
 ```conf
-Acquire::http::Proxy "http://192.168.202.2:3142";
+Acquire::http::Proxy "http://192.168.200.2:3142";
 Acquire::https::Proxy "DIRECT";
 ```
 
 Then use the following `HTTPS///` form in `/etc/apt/sources.list`. In this mode, APT sends a normal HTTP request to the configured proxy, and `apt-cacher-ng` interprets the `HTTPS///` URL prefix as an instruction to fetch the upstream repository over HTTPS.
 
-Older examples sometimes show direct cache-host URLs such as `http://192.168.202.2:3142/HTTPS///...`. On current Debian Bookworm apt-cacher-ng builds, that shape can fail with `403 Configuration error (confusing proxy mode) or prohibited port`. The proxy form below is the shape this lab validates.
+Older examples sometimes show direct cache-host URLs such as `http://192.168.200.2:3142/HTTPS///...`. On current Debian Bookworm apt-cacher-ng builds, that shape can fail with `403 Configuration error (confusing proxy mode) or prohibited port`. The proxy form below is the shape this lab validates.
 
 This lab sets `AllowUserPorts: 0` for apt-cacher-ng so the `HTTPS///` compatibility mode is not rejected by apt-cacher-ng's user-port guard. The remap-based modes remain the preferred secure shape because they avoid exposing `HTTPS///` source URLs to clients.
 
@@ -69,7 +69,7 @@ The resulting flow is:
 
 ```text
 APT client
-  -> proxy http://192.168.202.2:3142
+  -> proxy http://192.168.200.2:3142
   -> request http://HTTPS///deb.debian.org/debian
   -> apt-cacher-ng
   -> https://deb.debian.org/debian
@@ -116,7 +116,7 @@ deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free-fi
 Create `/etc/apt/apt.conf.d/00apt-cacher-ng-proxy`:
 
 ```conf
-Acquire::http::Proxy "http://192.168.202.2:3142";
+Acquire::http::Proxy "http://192.168.200.2:3142";
 Acquire::https::Proxy "DIRECT";
 ```
 
@@ -170,7 +170,7 @@ sudo apt update
 To specifically test formal proxy mode from a shell:
 
 ```bash
-curl -I -x http://192.168.202.2:3142 \
+curl -I -x http://192.168.200.2:3142 \
   http://deb.debian.org/debian/dists/bookworm/InRelease
 ```
 
@@ -289,7 +289,7 @@ set -euo pipefail
 # Option 2: HTTPS client -> reverse proxy -> apt-cacher-ng -> HTTPS upstream
 #
 # Server:
-#   apt-cache.provcont.lan / 192.168.202.2
+#   apt-cache.provcont.lan / 192.168.200.2
 #
 # Client-visible repository URLs:
 #   https://apt-cache.provcont.lan/debian
@@ -485,9 +485,9 @@ cat <<'CLIENT_COMMANDS'
 #
 # Prefer DNS. For quick testing only, use /etc/hosts:
 #
-#   192.168.202.2 apt-cache.provcont.lan
+#   192.168.200.2 apt-cache.provcont.lan
 
-# echo '192.168.202.2 apt-cache.provcont.lan' | sudo tee -a /etc/hosts
+# echo '192.168.200.2 apt-cache.provcont.lan' | sudo tee -a /etc/hosts
 
 # 2. Install the internal CA certificate that signed apt-cache.provcont.lan.
 #

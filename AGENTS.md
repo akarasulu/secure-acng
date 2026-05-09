@@ -42,7 +42,7 @@ Phase 4: clients move from apt-cacher-ng URLs to aptly published URLs
 
 Do not switch clients to aptly repositories until aptly publishing and repository signing are configured. Do not use `trusted=yes` as a shortcut.
 
-The reusable Ansible roles for this lab live in the sibling `nested` Ansible collection checkout at `../nested/roles`. Keep roles general-purpose and variable-driven. Avoid hard-coding the lab name except in inventory/group vars/defaults.
+The reusable Ansible roles for this lab live in the sibling `nested` Ansible collection checkout. Use `../nested/roles` when this repository is checked out directly beside `nested`, and `../../nested/roles` when this repository is used as `mkosi-lab/infra`. Keep roles general-purpose and variable-driven. Avoid hard-coding the lab name except in inventory/group vars/defaults.
 
 Important target: `provcont` must have one apt-cacher-ng configuration and one apt-cache nginx reverse proxy configuration that support all client scenarios at the same time. Do not reconfigure, reset, switch, or toggle the server between client tests. The clients vary; the server stays stable.
 
@@ -52,10 +52,10 @@ The current `Vagrantfile` defines one Debian Bookworm machine:
 
 - Name: `provcont`
 - Hostname: `provcont`
-- Private IP: `192.168.202.2`
-- Libvirt network: `provcont-lab`
-- Host IP: `192.168.202.1`
-- DHCP range: `192.168.202.10` through `192.168.202.254`
+- Private IP: `192.168.200.2`
+- Libvirt network: `mkosi-lab`
+- Host IP: `192.168.200.1`
+- DHCP range: `192.168.200.10` through `192.168.200.254`
 
 The initial cache DNS name is:
 
@@ -152,7 +152,7 @@ Create `ansible.cfg` in the repo root with repository-local defaults:
 ```ini
 [defaults]
 inventory = inventory/hosts.yml
-roles_path = ../nested/roles
+roles_path = ../nested/roles:../../nested/roles
 host_key_checking = False
 retry_files_enabled = False
 stdout_callback = default
@@ -174,11 +174,11 @@ all:
     apt_cache_servers:
       hosts:
         provcont:
-          ansible_host: 192.168.202.2
+          ansible_host: 192.168.200.2
     aptly_servers:
       hosts:
         provcont:
-          ansible_host: 192.168.202.2
+          ansible_host: 192.168.200.2
     apt_cache_clients:
       hosts:
         client_http_https_path:
@@ -194,8 +194,8 @@ Use `group_vars/all.yml` for common lab defaults:
 ```yaml
 apt_cache_domain: apt-cache.provcont.lan
 aptly_domain: aptly.provcont.lan
-apt_cache_server_ip: 192.168.202.2
-aptly_server_ip: 192.168.202.2
+apt_cache_server_ip: 192.168.200.2
+aptly_server_ip: 192.168.200.2
 apt_cache_tls_dir: /etc/ssl/provcont
 apt_cache_tls_cert_path: /etc/ssl/provcont/apt-cache.crt
 apt_cache_tls_key_path: /etc/ssl/provcont/apt-cache.key
@@ -215,7 +215,7 @@ Convert `Vagrantfile` into a multi-machine configuration.
 
 Keep `provcont` as the server:
 
-- `provcont`: `192.168.202.2`
+- `provcont`: `192.168.200.2`
 
 Add Debian Bookworm clients for the major access patterns from `Secure-apt-cacher-ng-setup.md`:
 
@@ -227,11 +227,11 @@ Add Debian Bookworm clients for the major access patterns from `Secure-apt-cache
 Recommended static private IPs:
 
 ```text
-provcont                    192.168.202.2
-client-http-https-path      192.168.202.11
-client-http-proxy           192.168.202.12
-client-http-internal-domain 192.168.202.13
-client-https-internal-domain 192.168.202.14
+provcont                    192.168.200.2
+client-http-https-path      192.168.200.3
+client-http-proxy           192.168.200.4
+client-http-internal-domain 192.168.200.5
+client-https-internal-domain 192.168.200.6
 ```
 
 Each machine should:
@@ -265,8 +265,8 @@ Responsibilities:
 
 The role must create one apt-cacher-ng configuration that supports every required client scenario concurrently:
 
-- direct `HTTPS///` path clients using `http://192.168.202.2:3142/HTTPS///...`
-- formal APT proxy clients using normal HTTP Debian repository URLs and `http://192.168.202.2:3142`
+- direct `HTTPS///` path clients using `http://192.168.200.2:3142/HTTPS///...`
+- formal APT proxy clients using normal HTTP Debian repository URLs and `http://192.168.200.2:3142`
 - clean internal HTTP clients using `http://apt-cache.provcont.lan/debian`
 - clean internal HTTPS clients using `https://apt-cache.provcont.lan/debian`
 
@@ -506,8 +506,8 @@ Mode behavior:
    Client source URLs use apt-cacher-ng `HTTPS///` syntax over plain HTTP:
 
    ```text
-   deb http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
-   deb http://192.168.202.2:3142/HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
+   deb http://192.168.200.2:3142/HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
+   deb http://192.168.200.2:3142/HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
    ```
 
    Do not configure `Acquire::http::Proxy` in this mode.
@@ -524,7 +524,7 @@ Mode behavior:
    Configure:
 
    ```conf
-   Acquire::http::Proxy "http://192.168.202.2:3142";
+   Acquire::http::Proxy "http://192.168.200.2:3142";
    Acquire::https::Proxy "DIRECT";
    ```
 
@@ -611,7 +611,7 @@ aptly_group: aptly
 aptly_root_dir: /var/lib/aptly
 aptly_config_path: /etc/aptly.conf
 aptly_domain: aptly.provcont.lan
-aptly_server_ip: 192.168.202.2
+aptly_server_ip: 192.168.200.2
 aptly_listen_http: 80
 aptly_listen_https: 443
 aptly_tls_enabled: true
@@ -762,21 +762,21 @@ The roles should remain reusable independently. The lab default runs apt-cacher-
 apt_cache_servers:
   hosts:
     acng01:
-      ansible_host: 192.168.202.2
+      ansible_host: 192.168.200.2
 
 aptly_servers:
   hosts:
     aptly01:
-      ansible_host: 192.168.202.3
+      ansible_host: 192.168.200.7
 ```
 
 In that topology:
 
 ```yaml
 apt_cache_domain: apt-cache.provcont.lan
-apt_cache_server_ip: 192.168.202.2
+apt_cache_server_ip: 192.168.200.2
 aptly_domain: aptly.provcont.lan
-aptly_server_ip: 192.168.202.3
+aptly_server_ip: 192.168.200.7
 aptly_acng_proxy_url: http://apt-cache.provcont.lan:3142
 ```
 

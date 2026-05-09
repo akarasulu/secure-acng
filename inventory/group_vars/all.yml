@@ -1,7 +1,7 @@
 apt_cache_domain: apt-cache.provcont.lan
 aptly_domain: aptly.provcont.lan
-apt_cache_server_ip: 192.168.202.2
-aptly_server_ip: 192.168.202.2
+apt_cache_server_ip: 192.168.200.2
+aptly_server_ip: 192.168.200.2
 
 apt_cache_tls_dir: /etc/ssl/provcont
 apt_cache_ca_cert_path: /etc/ssl/provcont/provcont-ca.crt

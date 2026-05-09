@@ -1,15 +1,15 @@
 require "rbconfig"
 
 VAGRANT_BOX = "debian/bookworm64"
-LAB_NETWORK = "provcont-lab"
-LAB_HOST_IP = "192.168.202.1"
+LAB_NETWORK = "mkosi-lab"
+LAB_HOST_IP = "192.168.200.1"
 
 MACHINES = {
-  "provcont" => "192.168.202.2",
-  "client-http-https-path" => "192.168.202.11",
-  "client-http-proxy" => "192.168.202.12",
-  "client-http-internal-domain" => "192.168.202.13",
-  "client-https-internal-domain" => "192.168.202.14"
+  "provcont" => "192.168.200.2",
+  "client-http-https-path" => "192.168.200.3",
+  "client-http-proxy" => "192.168.200.4",
+  "client-http-internal-domain" => "192.168.200.5",
+  "client-https-internal-domain" => "192.168.200.6"
 }.freeze
 
 SSH_FORWARD_PORTS = {
@@ -75,8 +75,8 @@ Vagrant.configure("2") do |config|
           ip: ip,
           libvirt__network_name: LAB_NETWORK,
           libvirt__host_ip: LAB_HOST_IP,
-          libvirt__dhcp_start: "192.168.202.10",
-          libvirt__dhcp_stop: "192.168.202.254"
+          libvirt__dhcp_start: "192.168.200.10",
+          libvirt__dhcp_stop: "192.168.200.254"
       else
         m.vm.network "private_network", ip: ip
       end

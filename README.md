@@ -6,11 +6,11 @@ The lab brings up one server and four client VMs:
 
 | VM | IP | Purpose |
 | --- | --- | --- |
-| `provcont` | `192.168.202.2` | Runs `apt-cacher-ng`, nginx TLS proxying, and aptly |
-| `client-http-https-path` | `192.168.202.11` | Tests ACNG `HTTPS///` URLs over HTTP |
-| `client-http-proxy` | `192.168.202.12` | Tests formal `Acquire::http::Proxy` mode |
-| `client-http-internal-domain` | `192.168.202.13` | Tests clean HTTP URLs through `apt-cache.provcont.lan` |
-| `client-https-internal-domain` | `192.168.202.14` | Tests clean HTTPS URLs through `apt-cache.provcont.lan` |
+| `provcont` | `192.168.200.2` | Runs `apt-cacher-ng`, nginx TLS proxying, and aptly |
+| `client-http-https-path` | `192.168.200.3` | Tests ACNG `HTTPS///` URLs over HTTP |
+| `client-http-proxy` | `192.168.200.4` | Tests formal `Acquire::http::Proxy` mode |
+| `client-http-internal-domain` | `192.168.200.5` | Tests clean HTTP URLs through `apt-cache.provcont.lan` |
+| `client-https-internal-domain` | `192.168.200.6` | Tests clean HTTPS URLs through `apt-cache.provcont.lan` |
 
 > [!TIP]
 > Provcont combines the first 4 letters of `provisioning controller`.
@@ -25,7 +25,13 @@ The Ansible roles for this lab live in the sibling `nested` collection checkout:
 ../nested/roles/
 ```
 
-Keep this repository checked out next to `nested`. The local `ansible.cfg` points `roles_path` at `../nested/roles`, so the playbooks can keep using the short role names while the reusable role implementations live in the collection project.
+When this repository is used as `mkosi-lab/infra`, the same collection is reached one level farther up:
+
+```text
+../../nested/roles/
+```
+
+Keep this repository checked out next to `nested`, or use it as the `infra` submodule inside `mkosi-lab` with `nested` checked out alongside `mkosi-lab`. The local `ansible.cfg` points `roles_path` at both locations, so the playbooks can keep using the short role names while the reusable role implementations live in the collection project.
 
 ## Requirements
 
@@ -73,7 +79,7 @@ On Windows, run Vagrant from PowerShell or Windows Terminal. After the VMs are u
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/run-wsl-ansible.ps1 -RepoPath <repo>
 ```
 
-The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.202.x` addresses directly.
+The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.200.x` addresses directly.
 
 To run validation automatically after provisioning:
 
@@ -112,7 +118,7 @@ This path is useful, but it is also the most fragile path in the lab. The moving
 
 Several almost-correct approaches fail in surprising ways:
 
-- Running Ansible directly against the private `192.168.202.x` VirtualBox addresses from WSL can fail because WSL may not be on the VirtualBox host-only network.
+- Running Ansible directly against the private `192.168.200.x` VirtualBox addresses from WSL can fail because WSL may not be on the VirtualBox host-only network.
 - Using `127.0.0.1:<vagrant-port>` from WSL can fail because that is WSL localhost, not Windows localhost.
 - Asking Windows `ssh.exe` to behave like a Unix SSH client under Ansible can expose oddities around control sockets, transfer helpers, and private-key ACL checks.
 - Piping a shell helper into `bash` can break when the helper itself calls `powershell.exe`, because child processes may consume the remaining stdin.
@@ -122,7 +128,7 @@ Several almost-correct approaches fail in surprising ways:
 
 The current helper exists because of all of that scar tissue. It asks Windows Vagrant for the real SSH config, generates an inventory inside this repo's `inventory/` directory, normalizes paths between Windows and WSL, and keeps enough diagnostics visible to make failures actionable. This setup was harder than it looks, but it is valuable because it lets a Windows user run VirtualBox normally while still using Ansible from WSL.
 
-The `Vagrantfile` creates all five Debian Bookworm machines with static private IPs. For libvirt it uses the shared `provcont-lab` network. For VirtualBox it uses Vagrant's private-network support directly. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
+The `Vagrantfile` creates all five Debian Bookworm machines with static private IPs. For libvirt it uses the shared `mkosi-lab` network. For VirtualBox it uses Vagrant's private-network support directly. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
 
 ## Validate
 
