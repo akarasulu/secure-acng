@@ -12,19 +12,27 @@ The lab brings up one server and four client VMs:
 | `client-http-internal-domain` | `192.168.202.13` | Tests clean HTTP URLs through `apt-cache.provcont.lan` |
 | `client-https-internal-domain` | `192.168.202.14` | Tests clean HTTPS URLs through `apt-cache.provcont.lan` |
 
->[!TIP] Provcont combines the first 4 letters of `provisioning controller`.
+> [!TIP]
+> Provcont combines the first 4 letters of `provisioning controller`.
 
 For the underlying secure ACNG patterns, see [Secure-apt-cacher-ng-setup.md](Secure-apt-cacher-ng-setup.md).
 
 ## Requirements
 
-Run this on a Linux host with virtualization support. The repository includes a helper for common distributions:
+Run this on a Linux host with virtualization support. The lab supports these Vagrant providers:
+
+- `libvirt`, the default path for this repository
+- `virtualbox`
+
+The repository includes a helper for common Linux distributions:
 
 ```bash
 scripts/install-linux-deps.sh
 ```
 
 It installs Ansible, Vagrant, libvirt/QEMU, `vagrant-libvirt`, SSH, rsync, build tooling, and related dependencies. If it adds your user to `libvirt` or `kvm`, log out and back in before continuing.
+
+For VirtualBox, install VirtualBox for your host OS before starting the lab. The `debian/bookworm64` base box currently publishes both `libvirt` and `virtualbox` provider images.
 
 Useful options:
 
@@ -35,15 +43,41 @@ scripts/install-linux-deps.sh --no-user-groups
 
 ## Start The Lab
 
-From the repository root:
+With libvirt:
 
 ```bash
-vagrant up
+vagrant up --provider=libvirt
 ansible-inventory --graph
 ansible-playbook playbooks/site.yml
 ```
 
-The `Vagrantfile` creates the shared libvirt network `provcont-lab` and starts all five Debian Bookworm machines. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
+With VirtualBox:
+
+```bash
+vagrant up --provider=virtualbox
+```
+
+On Windows, run the VirtualBox command from PowerShell or Windows Terminal. After the VMs are up, the `Vagrantfile` detects the VirtualBox provider on Windows and runs the Ansible site playbook through WSL:
+
+```text
+wsl.exe --cd <repo> bash -lc "ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbooks/site.yml"
+```
+
+To skip automatic WSL provisioning and run Ansible yourself:
+
+```powershell
+$env:SECURE_ACNG_SKIP_WSL_ANSIBLE = "1"
+vagrant up --provider=virtualbox
+```
+
+Then from WSL:
+
+```bash
+ANSIBLE_CONFIG=./ansible.cfg ansible-inventory --graph
+ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbooks/site.yml
+```
+
+The `Vagrantfile` creates all five Debian Bookworm machines with static private IPs. For libvirt it uses the shared `provcont-lab` network. For VirtualBox it uses Vagrant's private-network support directly. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
 
 ## Validate
 
@@ -104,4 +138,3 @@ ansible-playbook playbooks/aptly_server.yml
 ansible-playbook playbooks/apt_cache_clients.yml
 ansible-playbook playbooks/validate.yml
 ```
-
