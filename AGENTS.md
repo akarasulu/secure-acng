@@ -4,7 +4,7 @@
 
 Build this repository into a Vagrant-backed Ansible lab for secure `apt-cacher-ng` operation.
 
-The implementation must use the information in [Readme.md](Readme.md) as the behavioral source of truth, with one lab-specific adjustment: the nginx HTTP listener must proxy to apt-cacher-ng instead of redirecting, so the HTTP internal-domain client can be tested concurrently with HTTPS clients. The target system is a Debian Bookworm `provcont` machine that runs:
+The implementation must use the information in [Secure-apt-cacher-ng-setup.md](Secure-apt-cacher-ng-setup.md) as the behavioral source of truth, with one lab-specific adjustment: the nginx HTTP listener must proxy to apt-cacher-ng instead of redirecting, so the HTTP internal-domain client can be tested concurrently with HTTPS clients. The target system is a Debian Bookworm `provcont` machine that runs:
 
 - `apt-cacher-ng`
 - `nginx` as a reverse proxy
@@ -217,7 +217,7 @@ Keep `provcont` as the server:
 
 - `provcont`: `192.168.202.2`
 
-Add Debian Bookworm clients for the major access patterns from `Readme.md`:
+Add Debian Bookworm clients for the major access patterns from `Secure-apt-cacher-ng-setup.md`:
 
 - `client-http-https-path`: tests plain HTTP client URLs using `HTTPS///`
 - `client-http-proxy`: tests formal `Acquire::http::Proxy` mode with normal HTTP Debian sources
@@ -352,7 +352,7 @@ Responsibilities:
 
 The role must create one nginx site for `apt-cache.provcont.lan` that supports the reverse-proxy client scenarios concurrently. Do not swap nginx site templates or listener behavior per client type.
 
-The nginx template must implement the shared lab behavior derived from `Readme.md`:
+The nginx template must implement the shared lab behavior derived from `Secure-apt-cacher-ng-setup.md`:
 
 ```nginx
 server {
