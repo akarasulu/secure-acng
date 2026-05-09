@@ -36,11 +36,12 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  if provider == "virtualbox" && windows_host? && ENV["SECURE_ACNG_SKIP_WSL_ANSIBLE"] != "1"
+  if windows_host? && ENV["SECURE_ACNG_SKIP_WSL_ANSIBLE"] != "1"
     config.trigger.after :up do |trigger|
       trigger.info = "Running Ansible from WSL"
+      trigger.only_on = "client-https-internal-domain"
       trigger.run = {
-        inline: "wsl.exe --cd \"#{Dir.pwd}\" bash -lc \"ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbooks/site.yml\""
+        inline: "wsl.exe --cd \"#{Dir.pwd}\" bash -lc \"scripts/ansible-site-from-wsl.sh\""
       }
     end
   end

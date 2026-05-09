@@ -57,11 +57,13 @@ With VirtualBox:
 vagrant up --provider=virtualbox
 ```
 
-On Windows, run the VirtualBox command from PowerShell or Windows Terminal. After the VMs are up, the `Vagrantfile` detects the VirtualBox provider on Windows and runs the Ansible site playbook through WSL:
+On Windows, run Vagrant from PowerShell or Windows Terminal. After the VMs are up, the `Vagrantfile` runs the Ansible site playbook through WSL:
 
 ```text
-wsl.exe --cd <repo> bash -lc "ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbooks/site.yml"
+wsl.exe --cd <repo> bash -lc "scripts/ansible-site-from-wsl.sh"
 ```
+
+The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.202.x` addresses directly.
 
 To skip automatic WSL provisioning and run Ansible yourself:
 
@@ -75,6 +77,12 @@ Then from WSL:
 ```bash
 ANSIBLE_CONFIG=./ansible.cfg ansible-inventory --graph
 ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbooks/site.yml
+```
+
+If the private VirtualBox IPs are not reachable from WSL, use the same helper manually:
+
+```bash
+scripts/ansible-site-from-wsl.sh
 ```
 
 The `Vagrantfile` creates all five Debian Bookworm machines with static private IPs. For libvirt it uses the shared `provcont-lab` network. For VirtualBox it uses Vagrant's private-network support directly. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
