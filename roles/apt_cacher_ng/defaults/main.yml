@@ -4,8 +4,7 @@ apt_cacher_ng_force_managed: false
 apt_cacher_ng_config_dir: /etc/apt-cacher-ng
 apt_cacher_ng_cache_dir: /var/cache/apt-cacher-ng
 apt_cacher_ng_allow_user_ports:
-  - 80
-  - 443
+  - 0
 apt_cacher_ng_packages:
   - apt-cacher-ng
   - ca-certificates

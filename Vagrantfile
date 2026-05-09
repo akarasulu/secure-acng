@@ -12,6 +12,14 @@ MACHINES = {
   "client-https-internal-domain" => "192.168.202.14"
 }.freeze
 
+SSH_FORWARD_PORTS = {
+  "provcont" => 2222,
+  "client-http-https-path" => 2200,
+  "client-http-proxy" => 2201,
+  "client-http-internal-domain" => 2202,
+  "client-https-internal-domain" => 2203
+}.freeze
+
 def requested_provider
   provider_arg = ARGV.find { |arg| arg.start_with?("--provider=") }
   return provider_arg.split("=", 2).last if provider_arg
@@ -45,6 +53,14 @@ Vagrant.configure("2") do |config|
         inline: "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/run-wsl-ansible.ps1 -RepoPath \"#{Dir.pwd}\" -RunValidate \"#{run_validate}\""
       }
     end
+
+    config.trigger.after :reload do |trigger|
+      trigger.info = "Running Ansible from WSL"
+      trigger.only_on = "client-https-internal-domain"
+      trigger.run = {
+        inline: "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/run-wsl-ansible.ps1 -RepoPath \"#{Dir.pwd}\" -RunValidate \"#{run_validate}\""
+      }
+    end
   end
 
   MACHINES.each do |name, ip|
@@ -68,6 +84,15 @@ Vagrant.configure("2") do |config|
       m.vm.provider "virtualbox" do |vb|
         vb.name = "secure-acng-#{name}"
         vb.memory = 512
+      end
+
+      if windows_host?
+        m.vm.network "forwarded_port",
+          guest: 22,
+          host: SSH_FORWARD_PORTS.fetch(name),
+          host_ip: "0.0.0.0",
+          id: "ssh",
+          auto_correct: true
       end
     end
   end

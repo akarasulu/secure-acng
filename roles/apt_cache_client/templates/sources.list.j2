@@ -1,7 +1,7 @@
 {% set components = debian_components | join(' ') %}
 {% if apt_cache_client_mode == 'http_https_path' %}
-{% set debian_base = 'http://' ~ apt_cache_server_ip ~ ':' ~ (apt_cacher_ng_port | default(3142) | string) ~ '/HTTPS///deb.debian.org/debian' %}
-{% set security_base = 'http://' ~ apt_cache_server_ip ~ ':' ~ (apt_cacher_ng_port | default(3142) | string) ~ '/HTTPS///security.debian.org/debian-security' %}
+{% set debian_base = 'http://HTTPS///deb.debian.org/debian' %}
+{% set security_base = 'http://HTTPS///security.debian.org/debian-security' %}
 {% elif apt_cache_client_mode == 'http_proxy' %}
 {% set debian_base = 'http://deb.debian.org/debian' %}
 {% set security_base = 'http://security.debian.org/debian-security' %}

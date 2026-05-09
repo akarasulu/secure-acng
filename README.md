@@ -92,6 +92,26 @@ If the private VirtualBox IPs are not reachable from WSL, use the same helper ma
 scripts/ansible-site-from-wsl.sh
 ```
 
+### Windows, VirtualBox, WSL: Why This Is Weird
+
+This path is useful, but it is also the most fragile path in the lab. The moving parts cross three execution contexts:
+
+- Windows Vagrant controls VirtualBox.
+- WSL runs Ansible.
+- The Debian guests are reached through Vagrant's SSH forwarding.
+
+Several almost-correct approaches fail in surprising ways:
+
+- Running Ansible directly against the private `192.168.202.x` VirtualBox addresses from WSL can fail because WSL may not be on the VirtualBox host-only network.
+- Using `127.0.0.1:<vagrant-port>` from WSL can fail because that is WSL localhost, not Windows localhost.
+- Asking Windows `ssh.exe` to behave like a Unix SSH client under Ansible can expose oddities around control sockets, transfer helpers, and private-key ACL checks.
+- Piping a shell helper into `bash` can break when the helper itself calls `powershell.exe`, because child processes may consume the remaining stdin.
+- Windows checkouts may give shell scripts CRLF line endings, which turns `#!/usr/bin/env bash` into `bash\r`.
+- A temporary inventory outside `inventory/` will not automatically load this repo's `group_vars` and `host_vars`.
+- Vagrant's insecure private keys may have ACLs that Windows OpenSSH refuses, so the wrapper creates a restricted temporary copy.
+
+The current helper exists because of all of that scar tissue. It asks Windows Vagrant for the real SSH config, generates an inventory inside this repo's `inventory/` directory, normalizes paths between Windows and WSL, and keeps enough diagnostics visible to make failures actionable. This setup was harder than it looks, but it is valuable because it lets a Windows user run VirtualBox normally while still using Ansible from WSL.
+
 The `Vagrantfile` creates all five Debian Bookworm machines with static private IPs. For libvirt it uses the shared `provcont-lab` network. For VirtualBox it uses Vagrant's private-network support directly. The Ansible site playbook configures the cache server, aptly server pieces, and each client mode.
 
 ## Validate

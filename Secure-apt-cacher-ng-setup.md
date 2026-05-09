@@ -38,35 +38,39 @@ The `HTTPS///` syntax is apt-cacher-ng's “tell-me-what-you-need” HTTPS URL m
 
 Switching clients directly to upstream HTTPS repositories is a natural reflex, but then `apt-cacher-ng` can only tunnel those HTTPS connections with `PassThroughPattern`, which does not provide useful package-object caching. That defeats the main purpose of using `apt-cacher-ng`.
 
-Instead of adding a formal APT proxy configuration like this:
+Use a formal APT proxy configuration like this:
 
 ```conf
 Acquire::http::Proxy "http://192.168.202.2:3142";
+Acquire::https::Proxy "DIRECT";
 ```
 
-use the following `HTTPS///` form in `/etc/apt/sources.list`. In this mode, APT treats `192.168.202.2:3142` as the repository server itself, and `apt-cacher-ng` interprets the `HTTPS///` path prefix as an instruction to fetch the upstream repository over HTTPS.
+Then use the following `HTTPS///` form in `/etc/apt/sources.list`. In this mode, APT sends a normal HTTP request to the configured proxy, and `apt-cacher-ng` interprets the `HTTPS///` URL prefix as an instruction to fetch the upstream repository over HTTPS.
 
-Do **not** combine this `HTTPS///` source-list mode with `Acquire::http::Proxy` pointing at the same cache. Use one mode or the other.
+Older examples sometimes show direct cache-host URLs such as `http://192.168.202.2:3142/HTTPS///...`. On current Debian Bookworm apt-cacher-ng builds, that shape can fail with `403 Configuration error (confusing proxy mode) or prohibited port`. The proxy form below is the shape this lab validates.
+
+This lab sets `AllowUserPorts: 0` for apt-cacher-ng so the `HTTPS///` compatibility mode is not rejected by apt-cacher-ng's user-port guard. The remap-based modes remain the preferred secure shape because they avoid exposing `HTTPS///` source URLs to clients.
 
 ```sources.list
 # Binary packages
-deb http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
-deb http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm-updates main contrib non-free-firmware
-deb http://192.168.202.2:3142/HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
-deb http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+deb http://HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
+deb http://HTTPS///deb.debian.org/debian bookworm-updates main contrib non-free-firmware
+deb http://HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
+deb http://HTTPS///deb.debian.org/debian bookworm-backports main contrib non-free-firmware
 
 # Source packages, optional
-deb-src http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
-deb-src http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm-updates main contrib non-free-firmware
-deb-src http://192.168.202.2:3142/HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
-deb-src http://192.168.202.2:3142/HTTPS///deb.debian.org/debian bookworm-backports main contrib non-free-firmware
+deb-src http://HTTPS///deb.debian.org/debian bookworm main contrib non-free-firmware
+deb-src http://HTTPS///deb.debian.org/debian bookworm-updates main contrib non-free-firmware
+deb-src http://HTTPS///security.debian.org/debian-security bookworm-security main contrib non-free-firmware
+deb-src http://HTTPS///deb.debian.org/debian bookworm-backports main contrib non-free-firmware
 ```
 
 The resulting flow is:
 
 ```text
 APT client
-  -> http://192.168.202.2:3142/HTTPS///deb.debian.org/debian
+  -> proxy http://192.168.202.2:3142
+  -> request http://HTTPS///deb.debian.org/debian
   -> apt-cacher-ng
   -> https://deb.debian.org/debian
 ```
