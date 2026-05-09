@@ -1,0 +1,24 @@
+{% set components = debian_components | join(' ') %}
+{% if apt_cache_client_mode == 'http_https_path' %}
+{% set debian_base = 'http://' ~ apt_cache_server_ip ~ ':' ~ (apt_cacher_ng_port | default(3142) | string) ~ '/HTTPS///deb.debian.org/debian' %}
+{% set security_base = 'http://' ~ apt_cache_server_ip ~ ':' ~ (apt_cacher_ng_port | default(3142) | string) ~ '/HTTPS///security.debian.org/debian-security' %}
+{% elif apt_cache_client_mode == 'http_proxy' %}
+{% set debian_base = 'http://deb.debian.org/debian' %}
+{% set security_base = 'http://security.debian.org/debian-security' %}
+{% elif apt_cache_client_mode == 'http_internal_domain' %}
+{% set debian_base = 'http://' ~ apt_cache_domain ~ '/debian' %}
+{% set security_base = 'http://' ~ apt_cache_domain ~ '/debian-security' %}
+{% elif apt_cache_client_mode == 'https_internal_domain' %}
+{% set debian_base = 'https://' ~ apt_cache_domain ~ '/debian' %}
+{% set security_base = 'https://' ~ apt_cache_domain ~ '/debian-security' %}
+{% endif %}
+deb {{ debian_base }} {{ debian_release }} {{ components }}
+deb {{ debian_base }} {{ debian_release }}-updates {{ components }}
+deb {{ security_base }} {{ debian_release }}-security {{ components }}
+deb {{ debian_base }} {{ debian_release }}-backports {{ components }}
+{% if apt_cache_enable_source_repos %}
+deb-src {{ debian_base }} {{ debian_release }} {{ components }}
+deb-src {{ debian_base }} {{ debian_release }}-updates {{ components }}
+deb-src {{ security_base }} {{ debian_release }}-security {{ components }}
+deb-src {{ debian_base }} {{ debian_release }}-backports {{ components }}
+{% endif %}

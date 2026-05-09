@@ -1,0 +1,262 @@
+- name: Install aptly server packages
+  ansible.builtin.apt:
+    name: "{{ aptly_packages }}"
+    state: present
+    update_cache: true
+
+- name: Ensure aptly group exists
+  ansible.builtin.group:
+    name: "{{ aptly_group }}"
+    system: true
+    state: present
+
+- name: Ensure aptly user exists
+  ansible.builtin.user:
+    name: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    home: "{{ aptly_root_dir }}"
+    system: true
+    shell: /bin/sh
+    create_home: false
+    state: present
+
+- name: Ensure aptly directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: "0755"
+  loop:
+    - "{{ aptly_root_dir }}"
+    - "{{ aptly_public_dir }}"
+
+- name: Ensure aptly GnuPG directory exists
+  ansible.builtin.file:
+    path: "{{ aptly_gnupg_dir }}"
+    state: directory
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: "0700"
+
+- name: Ensure aptly official archive key directory exists
+  ansible.builtin.file:
+    path: "{{ aptly_official_archive_key_dir }}"
+    state: directory
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: "0755"
+
+- name: Ensure TLS directory exists
+  ansible.builtin.file:
+    path: "{{ aptly_tls_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Add aptly lab hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^\s*\S+\s+.*\b{{ aptly_domain | regex_escape }}\b'
+    line: "{{ aptly_server_ip }} {{ aptly_domain }}"
+    state: present
+
+- name: Generate lab CA private key when missing
+  ansible.builtin.command:
+    cmd: "openssl genrsa -out {{ aptly_ca_key_path }} 4096"
+    creates: "{{ aptly_ca_key_path }}"
+
+- name: Generate lab CA certificate when missing
+  ansible.builtin.command:
+    cmd: "openssl req -x509 -new -nodes -key {{ aptly_ca_key_path }} -sha256 -days 3650 -subj /CN=provcont-lab-ca -out {{ aptly_ca_cert_path }}"
+    creates: "{{ aptly_ca_cert_path }}"
+
+- name: Generate aptly private key
+  ansible.builtin.command:
+    cmd: "openssl genrsa -out {{ aptly_tls_key_path }} 2048"
+    creates: "{{ aptly_tls_key_path }}"
+  when: aptly_tls_enabled
+
+- name: Generate aptly certificate signing request
+  ansible.builtin.command:
+    cmd: "openssl req -new -key {{ aptly_tls_key_path }} -subj /CN={{ aptly_domain }} -out {{ aptly_tls_csr_path }}"
+    creates: "{{ aptly_tls_csr_path }}"
+  when: aptly_tls_enabled
+
+- name: Configure aptly certificate extensions
+  ansible.builtin.template:
+    src: cert-ext.cnf.j2
+    dest: "{{ aptly_tls_ext_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: aptly_tls_enabled
+
+- name: Sign aptly certificate with lab CA
+  ansible.builtin.command:
+    cmd: "openssl x509 -req -in {{ aptly_tls_csr_path }} -CA {{ aptly_ca_cert_path }} -CAkey {{ aptly_ca_key_path }} -CAcreateserial -out {{ aptly_tls_cert_path }} -days 825 -sha256 -extfile {{ aptly_tls_ext_path }}"
+    creates: "{{ aptly_tls_cert_path }}"
+  when: aptly_tls_enabled
+
+- name: Protect aptly TLS private key
+  ansible.builtin.file:
+    path: "{{ aptly_tls_key_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  when: aptly_tls_enabled
+
+- name: Configure aptly
+  ansible.builtin.template:
+    src: aptly.conf.j2
+    dest: "{{ aptly_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Export Debian archive keys for aptly
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --no-default-keyring
+      - "--keyring={{ aptly_debian_archive_keyring }}"
+      - --export
+      - "--output={{ aptly_exported_archive_keys }}"
+    creates: "{{ aptly_exported_archive_keys }}"
+
+- name: Set exported Debian archive key ownership
+  ansible.builtin.file:
+    path: "{{ aptly_exported_archive_keys }}"
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: "0644"
+
+- name: Import Debian archive keys into aptly trusted keyring
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --batch
+      - --yes
+      - --no-default-keyring
+      - "--keyring={{ aptly_trusted_keyring }}"
+      - --import
+      - "{{ aptly_exported_archive_keys }}"
+  become_user: "{{ aptly_user }}"
+  register: aptly_import_debian_keys
+  changed_when: "'imported:' in aptly_import_debian_keys.stderr or 'imported:' in aptly_import_debian_keys.stdout"
+
+- name: Download official Debian archive key files for aptly
+  ansible.builtin.get_url:
+    url: "{{ key_url }}"
+    dest: "{{ aptly_official_archive_key_dir }}/{{ key_url | basename }}"
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_group }}"
+    mode: "0644"
+  loop: "{{ aptly_official_archive_key_urls }}"
+  loop_control:
+    loop_var: key_url
+
+- name: Import official Debian archive key files into aptly trusted keyring
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --batch
+      - --yes
+      - --no-default-keyring
+      - "--keyring={{ aptly_trusted_keyring }}"
+      - --import
+      - "{{ aptly_official_archive_key_dir }}/{{ key_url | basename }}"
+  become_user: "{{ aptly_user }}"
+  register: aptly_import_official_key
+  changed_when: "'imported:' in aptly_import_official_key.stderr or 'imported:' in aptly_import_official_key.stdout"
+  loop: "{{ aptly_official_archive_key_urls }}"
+  loop_control:
+    loop_var: key_url
+
+- name: Install aptly apt-cacher-ng wrapper
+  ansible.builtin.template:
+    src: aptly-acng.j2
+    dest: "{{ aptly_acng_wrapper_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: List existing aptly mirrors
+  ansible.builtin.command:
+    argv:
+      - aptly
+      - "-config={{ aptly_config_path }}"
+      - mirror
+      - list
+      - -raw
+  become_user: "{{ aptly_user }}"
+  environment:
+    http_proxy: "{{ aptly_acng_proxy_url }}"
+    HTTP_PROXY: "{{ aptly_acng_proxy_url }}"
+  register: aptly_existing_mirrors
+  changed_when: false
+  when: aptly_manage_mirrors
+
+- name: Create aptly mirrors that fetch through apt-cacher-ng
+  ansible.builtin.command:
+    argv: "{{ ['aptly', '-config=' ~ aptly_config_path, 'mirror', 'create', '-architectures=' ~ ((mirror.architectures | default(aptly_mirror_architectures)) | join(',')), '-with-sources=' ~ ((mirror.with_sources | default(aptly_mirror_with_sources)) | bool | lower), mirror.name, mirror.url, mirror.distribution] + mirror.components }}"
+  become_user: "{{ aptly_user }}"
+  environment:
+    http_proxy: "{{ aptly_acng_proxy_url }}"
+    HTTP_PROXY: "{{ aptly_acng_proxy_url }}"
+  loop: "{{ aptly_mirrors }}"
+  loop_control:
+    loop_var: mirror
+    label: "{{ mirror.name }}"
+  when:
+    - aptly_manage_mirrors
+    - mirror.name not in aptly_existing_mirrors.stdout_lines
+
+- name: Update aptly mirrors through apt-cacher-ng
+  ansible.builtin.command:
+    argv:
+      - aptly
+      - "-config={{ aptly_config_path }}"
+      - mirror
+      - update
+      - "{{ mirror.name }}"
+  become_user: "{{ aptly_user }}"
+  environment:
+    http_proxy: "{{ aptly_acng_proxy_url }}"
+    HTTP_PROXY: "{{ aptly_acng_proxy_url }}"
+  loop: "{{ aptly_mirrors }}"
+  loop_control:
+    loop_var: mirror
+    label: "{{ mirror.name }}"
+  when:
+    - aptly_manage_mirrors
+    - aptly_update_mirrors
+
+- name: Configure nginx aptly site
+  ansible.builtin.template:
+    src: aptly.nginx.conf.j2
+    dest: "/etc/nginx/sites-available/{{ aptly_nginx_site_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable nginx aptly site
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ aptly_nginx_site_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ aptly_nginx_site_name }}"
+    state: link
+    owner: root
+    group: root
+  notify: Reload nginx
+
+- name: Validate nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Enable and start nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: started

@@ -1,0 +1,4 @@
+- hosts: apt_cache_clients
+  become: true
+  roles:
+    - role: apt_cache_client

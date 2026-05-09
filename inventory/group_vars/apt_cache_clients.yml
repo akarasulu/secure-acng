@@ -1,0 +1,4 @@
+apt_cache_client_manage_hosts: true
+apt_cache_client_install_ca: true
+apt_cache_client_run_update: true
+apt_cache_client_run_validation_install: true

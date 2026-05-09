@@ -1,0 +1,21 @@
+apt_cache_client_supported_modes:
+  - http_https_path
+  - http_proxy
+  - http_internal_domain
+  - https_internal_domain
+
+apt_cache_client_mode: https_internal_domain
+apt_cache_client_test_package: figlet
+apt_cache_client_packages:
+  - ca-certificates
+  - curl
+
+apt_cache_client_manage_hosts: true
+apt_cache_client_install_ca: true
+apt_cache_client_run_update: true
+apt_cache_client_run_validation_install: true
+apt_cache_client_proxy_conf_path: /etc/apt/apt.conf.d/00secure-acng-proxy
+apt_cache_client_sources_path: /etc/apt/sources.list
+apt_cache_client_ca_dest: /usr/local/share/ca-certificates/provcont-lab-ca.crt
+apt_cache_client_disable_source_files:
+  - /etc/apt/sources.list.d/debian.sources

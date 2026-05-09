@@ -1,0 +1,4 @@
+- hosts: aptly_servers
+  become: true
+  roles:
+    - role: aptly_server

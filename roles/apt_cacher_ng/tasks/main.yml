@@ -1,0 +1,50 @@
+- name: Install apt-cacher-ng packages
+  ansible.builtin.apt:
+    name: "{{ apt_cacher_ng_packages }}"
+    state: present
+    update_cache: true
+
+- name: Ensure apt-cacher-ng configuration directory exists
+  ansible.builtin.file:
+    path: "{{ apt_cacher_ng_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure apt-cacher-ng lab base settings
+  ansible.builtin.template:
+    src: 00-secure-acng-base.conf.j2
+    dest: "{{ apt_cacher_ng_config_dir }}/00-secure-acng-base.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart apt-cacher-ng
+
+- name: Configure apt-cacher-ng HTTPS backend files
+  ansible.builtin.template:
+    src: backend-file.j2
+    dest: "{{ apt_cacher_ng_config_dir }}/{{ backend.value.file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ apt_cacher_ng_backends | dict2items }}"
+  loop_control:
+    loop_var: backend
+    label: "{{ backend.value.file }}"
+  notify: Restart apt-cacher-ng
+
+- name: Configure apt-cacher-ng remaps
+  ansible.builtin.template:
+    src: 10-secure-acng-remaps.conf.j2
+    dest: "{{ apt_cacher_ng_config_dir }}/10-secure-acng-remaps.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart apt-cacher-ng
+
+- name: Enable and start apt-cacher-ng
+  ansible.builtin.systemd_service:
+    name: apt-cacher-ng
+    enabled: true
+    state: started

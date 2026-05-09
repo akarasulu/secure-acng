@@ -1,0 +1,17 @@
+nginx_acng_packages:
+  - nginx
+  - openssl
+  - ca-certificates
+
+nginx_acng_server_name: "{{ apt_cache_domain }}"
+nginx_acng_listen_http: 80
+nginx_acng_listen_https: 443
+nginx_acng_backend_url: "http://127.0.0.1:{{ apt_cacher_ng_port | default(3142) }}"
+nginx_acng_tls_dir: "{{ apt_cache_tls_dir }}"
+nginx_acng_ca_cert_path: "{{ apt_cache_ca_cert_path }}"
+nginx_acng_ca_key_path: "{{ apt_cache_ca_key_path }}"
+nginx_acng_tls_cert_path: "{{ apt_cache_tls_cert_path }}"
+nginx_acng_tls_key_path: "{{ apt_cache_tls_key_path }}"
+nginx_acng_tls_csr_path: "{{ apt_cache_tls_csr_path }}"
+nginx_acng_tls_ext_path: "{{ apt_cache_tls_ext_path }}"
+nginx_acng_site_name: apt-cache

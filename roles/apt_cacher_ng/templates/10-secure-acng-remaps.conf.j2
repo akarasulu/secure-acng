@@ -1,0 +1,3 @@
+{% for remap in apt_cacher_ng_remaps %}
+Remap-{{ remap.name }}: {{ remap.source }} ; file:{{ remap.backend_file }}
+{% endfor %}

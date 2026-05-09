@@ -1,0 +1,7 @@
+{% if apt_cache_client_mode == 'http_proxy' %}
+Acquire::http::Proxy "http://{{ apt_cache_server_ip }}:{{ apt_cacher_ng_port | default(3142) }}";
+Acquire::https::Proxy "DIRECT";
+{% else %}
+Acquire::http::Proxy "false";
+Acquire::https::Proxy "false";
+{% endif %}

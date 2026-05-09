@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+export http_proxy="{{ aptly_acng_proxy_url }}"
+export HTTP_PROXY="{{ aptly_acng_proxy_url }}"
+unset https_proxy
+unset HTTPS_PROXY
+
+exec aptly -config="{{ aptly_config_path }}" "$@"

@@ -1,0 +1,2 @@
+apt_cacher_ng_bind_address: 0.0.0.0
+apt_cacher_ng_force_managed: false

@@ -1,0 +1,24 @@
+apt_cache_domain: apt-cache.provcont.lan
+aptly_domain: aptly.provcont.lan
+apt_cache_server_ip: 192.168.202.2
+aptly_server_ip: 192.168.202.2
+
+apt_cache_tls_dir: /etc/ssl/provcont
+apt_cache_ca_cert_path: /etc/ssl/provcont/provcont-ca.crt
+apt_cache_ca_key_path: /etc/ssl/provcont/provcont-ca.key
+apt_cache_tls_cert_path: /etc/ssl/provcont/apt-cache.crt
+apt_cache_tls_key_path: /etc/ssl/provcont/apt-cache.key
+apt_cache_tls_csr_path: /etc/ssl/provcont/apt-cache.csr
+apt_cache_tls_ext_path: /etc/ssl/provcont/apt-cache.ext
+
+aptly_tls_cert_path: /etc/ssl/provcont/aptly.crt
+aptly_tls_key_path: /etc/ssl/provcont/aptly.key
+aptly_tls_csr_path: /etc/ssl/provcont/aptly.csr
+aptly_tls_ext_path: /etc/ssl/provcont/aptly.ext
+
+debian_release: bookworm
+debian_components:
+  - main
+  - contrib
+  - non-free-firmware
+apt_cache_enable_source_repos: false

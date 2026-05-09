@@ -1,0 +1,36 @@
+- hosts: apt_cache_clients
+  become: true
+  tasks:
+    - name: Install client-specific cache validation package
+      ansible.builtin.apt:
+        name: "{{ apt_cache_client_test_package }}"
+        state: present
+        update_cache: true
+
+- hosts: apt_cache_servers
+  become: true
+  tasks:
+    - name: Read apt-cacher-ng access log
+      ansible.builtin.slurp:
+        src: /var/log/apt-cacher-ng/apt-cacher.log
+      register: apt_cacher_ng_log
+
+    - name: Find apt-cacher-ng cached package files
+      ansible.builtin.find:
+        paths: /var/cache/apt-cacher-ng
+        recurse: true
+        file_type: file
+        patterns: "*.deb"
+      register: apt_cacher_ng_cached_debs
+
+    - name: Check validation packages touched the cache
+      ansible.builtin.assert:
+        that:
+          - >-
+            package_name in (apt_cacher_ng_log.content | b64decode)
+            or
+            (apt_cacher_ng_cached_debs.files | map(attribute='path') | select('search', package_name) | list | length) > 0
+        fail_msg: "No apt-cacher-ng log or cache evidence found for {{ package_name }}"
+      loop: "{{ groups['apt_cache_clients'] | map('extract', hostvars, 'apt_cache_client_test_package') | list }}"
+      loop_control:
+        loop_var: package_name

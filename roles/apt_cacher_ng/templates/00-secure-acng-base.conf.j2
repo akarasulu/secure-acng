@@ -1,0 +1,10 @@
+Port: {{ apt_cacher_ng_port }}
+BindAddress: {{ apt_cacher_ng_bind_address }}
+{% if apt_cacher_ng_allow_user_ports | length > 0 %}
+AllowUserPorts: {{ apt_cacher_ng_allow_user_ports | join(' ') }}
+{% endif %}
+{% if apt_cacher_ng_force_managed %}
+ForceManaged: 1
+{% else %}
+# ForceManaged: 1
+{% endif %}

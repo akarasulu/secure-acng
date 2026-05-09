@@ -1,0 +1,74 @@
+- name: Validate apt cache client mode
+  ansible.builtin.assert:
+    that:
+      - apt_cache_client_mode in apt_cache_client_supported_modes
+    fail_msg: "Unsupported apt_cache_client_mode: {{ apt_cache_client_mode }}"
+
+- name: Add apt cache hostname to client hosts file
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^\s*{{ apt_cache_server_ip | regex_escape }}\s+.*\b{{ apt_cache_domain | regex_escape }}\b'
+    line: "{{ apt_cache_server_ip }} {{ apt_cache_domain }}"
+    state: present
+  when: apt_cache_client_manage_hosts
+
+- name: Read lab CA certificate from cache server
+  ansible.builtin.slurp:
+    src: "{{ apt_cache_ca_cert_path }}"
+  delegate_to: "{{ groups['apt_cache_servers'][0] }}"
+  register: apt_cache_client_ca
+  when: apt_cache_client_install_ca
+
+- name: Install lab CA certificate on client
+  ansible.builtin.copy:
+    content: "{{ apt_cache_client_ca.content | b64decode }}"
+    dest: "{{ apt_cache_client_ca_dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Update CA certificates
+  when: apt_cache_client_install_ca
+
+- name: Flush CA update before configuring HTTPS apt sources
+  ansible.builtin.meta: flush_handlers
+
+- name: Configure apt sources for selected cache mode
+  ansible.builtin.template:
+    src: sources.list.j2
+    dest: "{{ apt_cache_client_sources_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: apt_cache_client_sources
+
+- name: Configure apt proxy policy for selected cache mode
+  ansible.builtin.template:
+    src: apt-proxy.conf.j2
+    dest: "{{ apt_cache_client_proxy_conf_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  register: apt_cache_client_proxy
+
+- name: Disable default source files that would bypass the cache mode
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ apt_cache_client_disable_source_files }}"
+
+- name: Update apt cache for selected cache mode
+  ansible.builtin.apt:
+    update_cache: true
+  when: apt_cache_client_run_update
+
+- name: Install apt client support packages
+  ansible.builtin.apt:
+    name: "{{ apt_cache_client_packages }}"
+    state: present
+    update_cache: false
+
+- name: Install client-specific cache validation package
+  ansible.builtin.apt:
+    name: "{{ apt_cache_client_test_package }}"
+    state: present
+  when: apt_cache_client_run_validation_install

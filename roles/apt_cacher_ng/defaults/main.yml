@@ -1,0 +1,36 @@
+apt_cacher_ng_port: 3142
+apt_cacher_ng_bind_address: 0.0.0.0
+apt_cacher_ng_force_managed: false
+apt_cacher_ng_config_dir: /etc/apt-cacher-ng
+apt_cacher_ng_cache_dir: /var/cache/apt-cacher-ng
+apt_cacher_ng_allow_user_ports:
+  - 80
+  - 443
+apt_cacher_ng_packages:
+  - apt-cacher-ng
+  - ca-certificates
+  - curl
+
+apt_cacher_ng_backends:
+  debian_https:
+    file: backends_debian_https
+    urls:
+      - https://deb.debian.org/debian/
+  debian_security_https:
+    file: backends_debian_security_https
+    urls:
+      - https://security.debian.org/debian-security/
+
+apt_cacher_ng_remaps:
+  - name: debian-https
+    source: /debian
+    backend_file: backends_debian_https
+  - name: debian-security-https
+    source: /debian-security
+    backend_file: backends_debian_security_https
+  - name: debian-host-https
+    source: deb.debian.org/debian
+    backend_file: backends_debian_https
+  - name: debian-security-host-https
+    source: security.debian.org/debian-security
+    backend_file: backends_debian_security_https

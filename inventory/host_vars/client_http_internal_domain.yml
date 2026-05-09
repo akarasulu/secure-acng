@@ -1,0 +1,2 @@
+apt_cache_client_mode: http_internal_domain
+apt_cache_client_test_package: toilet
