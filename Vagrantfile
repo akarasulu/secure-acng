@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
       trigger.info = "Running Ansible from WSL"
       trigger.only_on = "client-https-internal-domain"
       trigger.run = {
-        inline: "wsl.exe --cd \"#{Dir.pwd}\" bash -lc \"tmp=\\$(mktemp); tr -d '\\r' < scripts/ansible-site-from-wsl.sh > \\$tmp; SECURE_ACNG_RUN_VALIDATE=#{run_validate} bash \\$tmp; status=\\$?; rm -f \\$tmp; exit \\$status\""
+        inline: "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/run-wsl-ansible.ps1 -RepoPath \"#{Dir.pwd}\" -RunValidate \"#{run_validate}\""
       }
     end
   end

@@ -1,4 +1,5 @@
 *.sh text eol=lf
+*.ps1 text eol=lf
 Vagrantfile text eol=lf
 *.yml text eol=lf
 *.j2 text eol=lf

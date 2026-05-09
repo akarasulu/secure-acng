@@ -60,7 +60,7 @@ vagrant up --provider=virtualbox
 On Windows, run Vagrant from PowerShell or Windows Terminal. After the VMs are up, the `Vagrantfile` runs the Ansible site playbook through WSL:
 
 ```text
-wsl.exe --cd <repo> bash -lc "tmp=$(mktemp); tr -d '\r' < scripts/ansible-site-from-wsl.sh > $tmp; bash $tmp; status=$?; rm -f $tmp; exit $status"
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/run-wsl-ansible.ps1 -RepoPath <repo>
 ```
 
 The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.202.x` addresses directly.
