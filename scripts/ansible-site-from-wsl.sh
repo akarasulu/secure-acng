@@ -43,15 +43,16 @@ path_for_wsl() {
 }
 
 repo_windows_path="$(wslpath -w "${PWD}")"
+repo_windows_path_ps="${repo_windows_path//\'/\'\'}"
 ssh_config_file="$(mktemp)"
 inventory_file="$(mktemp)"
 trap 'rm -f "${ssh_config_file}" "${inventory_file}"' EXIT
 
-SECURE_ACNG_REPO_WINDOWS_PATH="${repo_windows_path}" powershell.exe \
+powershell.exe \
   -NoProfile \
   -NonInteractive \
   -ExecutionPolicy Bypass \
-  -Command '$ErrorActionPreference = "Stop"; Set-Location -LiteralPath $env:SECURE_ACNG_REPO_WINDOWS_PATH; vagrant ssh-config' |
+  -Command "\$ErrorActionPreference = 'Stop'; Set-Location -LiteralPath '${repo_windows_path_ps}'; vagrant ssh-config" |
   tr -d '\r' > "${ssh_config_file}"
 
 {

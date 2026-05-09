@@ -5,13 +5,5 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$wslCommand = @"
-set -euo pipefail
-tmp=`$(mktemp)
-trap 'rm -f "`$tmp"' EXIT
-tr -d '\r' < scripts/ansible-site-from-wsl.sh > "`$tmp"
-SECURE_ACNG_RUN_VALIDATE=$RunValidate bash "`$tmp"
-"@
-
-& wsl.exe --cd $RepoPath bash -lc $wslCommand
+& wsl.exe --cd $RepoPath env "SECURE_ACNG_RUN_VALIDATE=$RunValidate" bash -c "tr -d '\r' < scripts/ansible-site-from-wsl.sh | bash"
 exit $LASTEXITCODE
