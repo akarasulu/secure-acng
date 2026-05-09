@@ -121,3 +121,7 @@ EOF
 } > "${inventory_file}"
 
 ANSIBLE_CONFIG=./ansible.cfg ansible-playbook -i "${inventory_file}" playbooks/site.yml
+
+if [[ "${SECURE_ACNG_RUN_VALIDATE:-0}" == "1" ]]; then
+  ANSIBLE_CONFIG=./ansible.cfg ansible-playbook -i "${inventory_file}" playbooks/validate.yml
+fi

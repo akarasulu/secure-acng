@@ -23,6 +23,7 @@ def requested_provider
 end
 
 provider = requested_provider || "libvirt"
+run_validate = ENV.fetch("SECURE_ACNG_RUN_VALIDATE", "0")
 
 def windows_host?
   RbConfig::CONFIG["host_os"].match?(/mswin|mingw|cygwin/i)
@@ -41,7 +42,7 @@ Vagrant.configure("2") do |config|
       trigger.info = "Running Ansible from WSL"
       trigger.only_on = "client-https-internal-domain"
       trigger.run = {
-        inline: "wsl.exe --cd \"#{Dir.pwd}\" bash -lc \"scripts/ansible-site-from-wsl.sh\""
+        inline: "wsl.exe --cd \"#{Dir.pwd}\" bash -lc \"tmp=\\$(mktemp); tr -d '\\r' < scripts/ansible-site-from-wsl.sh > \\$tmp; SECURE_ACNG_RUN_VALIDATE=#{run_validate} bash \\$tmp; status=\\$?; rm -f \\$tmp; exit \\$status\""
       }
     end
   end
