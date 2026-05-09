@@ -20,6 +20,14 @@ SSH_FORWARD_PORTS = {
   "client-https-internal-domain" => 2203
 }.freeze
 
+MACHINE_MEMORY_MB = Hash.new(512).merge(
+  "provcont" => 4096
+).freeze
+
+MACHINE_CPUS = Hash.new(1).merge(
+  "provcont" => 4
+).freeze
+
 def requested_provider
   provider_arg = ARGV.find { |arg| arg.start_with?("--provider=") }
   return provider_arg.split("=", 2).last if provider_arg
@@ -83,7 +91,13 @@ Vagrant.configure("2") do |config|
 
       m.vm.provider "virtualbox" do |vb|
         vb.name = "secure-acng-#{name}"
-        vb.memory = 512
+        vb.memory = MACHINE_MEMORY_MB[name]
+        vb.cpus = MACHINE_CPUS[name]
+      end
+
+      m.vm.provider "libvirt" do |lv|
+        lv.memory = MACHINE_MEMORY_MB[name]
+        lv.cpus = MACHINE_CPUS[name]
       end
 
       if windows_host?
