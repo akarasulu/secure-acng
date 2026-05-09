@@ -12,6 +12,8 @@ The lab brings up one server and four client VMs:
 | `client-http-internal-domain` | `192.168.202.13` | Tests clean HTTP URLs through `apt-cache.provcont.lan` |
 | `client-https-internal-domain` | `192.168.202.14` | Tests clean HTTPS URLs through `apt-cache.provcont.lan` |
 
+>[TIP!] Provcont combines the first 4 letters of `provisioning controller`.
+
 For the underlying secure ACNG patterns, see [Secure-apt-cacher-ng-setup.md](Secure-apt-cacher-ng-setup.md).
 
 ## Requirements
