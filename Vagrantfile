@@ -3,6 +3,9 @@ require "rbconfig"
 VAGRANT_BOX = "debian/bookworm64"
 LAB_NETWORK = "mkosi-lab"
 LAB_HOST_IP = "192.168.200.1"
+LIBVIRT_MACHINE_TYPE = "q35"
+LIBVIRT_USB_CONTROLLER_MODEL = "qemu-xhci"
+LIBVIRT_USB_CONTROLLER_PORTS = 15
 
 MACHINES = {
   "provcont" => "192.168.200.2",
@@ -27,6 +30,19 @@ MACHINE_MEMORY_MB = Hash.new(512).merge(
 MACHINE_CPUS = Hash.new(1).merge(
   "provcont" => 4
 ).freeze
+
+PROVCONT_OPERATOR_USB_DEVICES = [
+  {
+    name: "ADATA USB Flash Drive",
+    vendor: "0x125f",
+    product: "0xdd1b"
+  },
+  {
+    name: "YubiKey OTP+FIDO+CCID",
+    vendor: "0x1050",
+    product: "0x0407"
+  }
+].freeze
 
 def requested_provider
   provider_arg = ARGV.find { |arg| arg.start_with?("--provider=") }
@@ -98,6 +114,21 @@ Vagrant.configure("2") do |config|
       m.vm.provider "libvirt" do |lv|
         lv.memory = MACHINE_MEMORY_MB[name]
         lv.cpus = MACHINE_CPUS[name]
+        lv.machine_type = LIBVIRT_MACHINE_TYPE
+        lv.usb_controller(
+          model: LIBVIRT_USB_CONTROLLER_MODEL,
+          ports: LIBVIRT_USB_CONTROLLER_PORTS
+        )
+
+        if name == "provcont" && ENV["MKOSI_LAB_PROVCONT_OPERATOR_USB"] == "1"
+          PROVCONT_OPERATOR_USB_DEVICES.each do |device|
+            lv.usb(
+              vendor: device.fetch(:vendor),
+              product: device.fetch(:product),
+              startupPolicy: "optional"
+            )
+          end
+        end
       end
 
       if windows_host?
