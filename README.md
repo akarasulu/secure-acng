@@ -92,11 +92,10 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/
 ```
 
 The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.200.x` addresses directly.
-
 For physical installer USB issuance, share the target USB plus HSM directly to
 `provcont` over USB/IP. Do not attach those devices to WSL for the issuance
 path. The parent `mkosi-lab/docs/operator-usbip-process.md` note records the
-ceremony and the Ansible variables used by the `mkosi_esp_project` role.
+ceremony and the Ansible variables used by the `mkosi-esp-project` role.
 
 To run validation automatically after provisioning:
 
