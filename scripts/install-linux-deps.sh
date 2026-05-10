@@ -6,6 +6,8 @@ usage() {
 Usage: scripts/install-linux-deps.sh [--skip-vagrant-plugin] [--no-user-groups]
 
 Installs host-side Linux dependencies for this Vagrant + Ansible + libvirt lab.
+Also installs Linux USB/IP tooling so this host can export operator USB devices
+to provcont when used as an operator workstation.
 
 Options:
   --skip-vagrant-plugin  Do not install/update the vagrant-libvirt plugin
@@ -121,6 +123,26 @@ install_packages() {
   fi
 }
 
+install_usbip_packages() {
+  if have usbip && have usbipd; then
+    return 0
+  fi
+
+  if have apt-get; then
+    "${sudo_cmd[@]}" apt-get install -y usbip
+  elif have dnf; then
+    "${sudo_cmd[@]}" dnf install -y usbip || "${sudo_cmd[@]}" dnf install -y kernel-tools || true
+  elif have pacman; then
+    "${sudo_cmd[@]}" pacman -Sy --needed --noconfirm usbip || true
+  elif have zypper; then
+    "${sudo_cmd[@]}" zypper --non-interactive install usbip || true
+  fi
+
+  if ! have usbip || ! have usbipd; then
+    echo "WARNING: Linux USB/IP tools were not found after package installation. Install your distribution's usbip package before exporting operator USB devices." >&2
+  fi
+}
+
 enable_libvirt() {
   if have systemctl; then
     if systemctl list-unit-files libvirtd.service >/dev/null 2>&1; then
@@ -129,6 +151,23 @@ enable_libvirt() {
       "${sudo_cmd[@]}" systemctl enable --now virtqemud
       "${sudo_cmd[@]}" systemctl enable --now virtnetworkd || true
     fi
+  fi
+}
+
+enable_usbip() {
+  if have modprobe; then
+    "${sudo_cmd[@]}" modprobe usbip-core || true
+    "${sudo_cmd[@]}" modprobe usbip-host || true
+  fi
+
+  if have systemctl; then
+    if systemctl list-unit-files usbipd.service >/dev/null 2>&1; then
+      "${sudo_cmd[@]}" systemctl enable --now usbipd
+    elif have usbipd; then
+      echo "usbipd.service was not found; start usbipd manually with 'sudo usbipd -D' before exporting devices."
+    fi
+  elif have usbipd; then
+    echo "systemd was not found; start usbipd manually with 'sudo usbipd -D' before exporting devices."
   fi
 }
 
@@ -159,7 +198,9 @@ install_vagrant_plugin() {
 }
 
 install_packages
+install_usbip_packages
 enable_libvirt
+enable_usbip
 add_user_groups
 install_vagrant_plugin
 
@@ -172,4 +213,8 @@ before running:
 
   vagrant up
   ansible-playbook playbooks/site.yml
+
+Linux USB/IP tooling was installed for operator USB export. To export a device
+from this Linux host, start usbipd if needed, run 'usbip list -l', then bind only
+approved devices with 'sudo usbip bind -b <busid>'.
 EOF

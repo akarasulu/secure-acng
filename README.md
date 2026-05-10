@@ -46,7 +46,9 @@ The repository includes a helper for common Linux distributions:
 scripts/install-linux-deps.sh
 ```
 
-It installs Ansible, Vagrant, libvirt/QEMU, `vagrant-libvirt`, SSH, rsync, build tooling, and related dependencies. If it adds your user to `libvirt` or `kvm`, log out and back in before continuing.
+It installs Ansible, Vagrant, libvirt/QEMU, `vagrant-libvirt`, SSH, rsync,
+build tooling, Linux USB/IP export tooling, and related dependencies. If it adds
+your user to `libvirt` or `kvm`, log out and back in before continuing.
 
 For VirtualBox, install VirtualBox for your host OS before starting the lab. The `debian/bookworm64` base box currently publishes both `libvirt` and `virtualbox` provider images.
 
@@ -56,6 +58,16 @@ Useful options:
 scripts/install-linux-deps.sh --skip-vagrant-plugin
 scripts/install-linux-deps.sh --no-user-groups
 ```
+
+On Windows operator workstations, run the Windows helper from PowerShell:
+
+```powershell
+scripts\install-windows-deps.ps1
+```
+
+It installs `usbipd-win` with `winget` when missing and starts the `usbipd`
+service. Binding devices is still an explicit operator action in an elevated
+PowerShell prompt.
 
 ## Start The Lab
 
@@ -81,11 +93,10 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/
 
 The helper asks Windows Vagrant for `vagrant ssh-config`, builds a temporary WSL-friendly Ansible inventory, and connects through Vagrant's forwarded SSH ports. This avoids relying on WSL being able to reach the VirtualBox host-only `192.168.200.x` addresses directly.
 
-For physical installer USB issuance, install `usbipd-win` on the Windows
-operator workstation and share the target USB plus HSM directly to `provcont`.
-Do not attach those devices to WSL for the issuance path. The parent
-`mkosi-lab/docs/operator-usbip-process.md` note records the ceremony and the
-Ansible variables used by the `mkosi_esp_project` role.
+For physical installer USB issuance, share the target USB plus HSM directly to
+`provcont` over USB/IP. Do not attach those devices to WSL for the issuance
+path. The parent `mkosi-lab/docs/operator-usbip-process.md` note records the
+ceremony and the Ansible variables used by the `mkosi_esp_project` role.
 
 To run validation automatically after provisioning:
 
