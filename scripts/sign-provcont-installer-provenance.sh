@@ -75,7 +75,18 @@ echo "== USB/IP imports =="
 sudo /usr/sbin/usbip port
 
 echo "== GPG card =="
-gpg --card-status
+card_status="$(gpg --card-status)"
+printf '%s\n' "${card_status}"
+
+if grep -q 'General key info..: \[none\]' <<<"${card_status}"; then
+  cat >&2 <<'EOF'
+The HSM is visible, but provcont has not resolved the public OpenPGP
+certificate for this card. Do not copy the key ad hoc from Windows.
+Provision the public key on provcont from the card URL, a controlled URL, or a
+controlled repository/trust-bundle file, then rerun this helper.
+EOF
+  exit 1
+fi
 
 echo "== Signing provenance artifacts in ${artifact_dir} =="
 for file in "${files[@]}"; do
