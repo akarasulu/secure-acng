@@ -86,10 +86,10 @@ playbooks/
   aptly_server.yml
   validate.yml
 ../nested/roles/
-  apt_cacher_ng/
-  nginx_acng_reverse_proxy/
-  aptly_server/
-  apt_cache_client/
+  apt-cacher-ng/
+  nginx-acng-reverse-proxy/
+  aptly-server/
+  apt-cache-client/
 ```
 
 Role internals should follow normal Ansible role layout:
@@ -248,7 +248,7 @@ Each client host exists to test exactly one client mode. Do not stack multiple m
 
 All client hosts must test the same running `provcont` server concurrently. Server-side apt-cacher-ng and nginx settings must not vary by client host.
 
-## Role: `apt_cacher_ng`
+## Role: `apt-cacher-ng`
 
 Purpose: install and configure apt-cacher-ng in a reusable way.
 
@@ -335,7 +335,7 @@ The `HTTPS///` clients do not need dedicated remap rules; apt-cacher-ng handles 
 
 Do not configure `PassThroughPattern` as the primary solution. CONNECT tunneling does not provide useful package-object caching and is intentionally not the goal.
 
-## Role: `nginx_acng_reverse_proxy`
+## Role: `nginx-acng-reverse-proxy`
 
 Purpose: expose apt-cacher-ng through nginx, including TLS termination.
 
@@ -454,7 +454,7 @@ aptly_tls_key_source: null
 
 When `*_tls_manage` is false or source files are provided, the role should install the supplied CA, certificate, and key instead of generating new material. If the certificate is issued by a public CA already trusted by clients, client CA installation can be disabled. If an internal CA is used, clients must install that CA certificate through Ansible.
 
-## Role: `apt_cache_client`
+## Role: `apt-cache-client`
 
 Purpose: configure Debian clients to use the cache in several test modes.
 
@@ -584,7 +584,7 @@ Do not use the same package on every client. If all clients request the same pac
 
 Client role variables must affect only client-side configuration. They must not mutate server-side apt-cacher-ng or nginx behavior.
 
-## Role: `aptly_server`
+## Role: `aptly-server`
 
 Purpose: install and initialize an aptly server on `provcont` in a reusable way, exposed through nginx at `aptly.provcont.lan` by default.
 
@@ -752,7 +752,7 @@ server {
 
 If `aptly_api_enabled: true`, add a separate nginx location for the aptly API proxying to `http://127.0.0.1:8080`, but keep that disabled by default. Static repository publishing is the first target.
 
-The `aptly_server` role may install nginx if needed, but it must not overwrite the apt-cacher-ng nginx site. Multiple nginx sites should coexist under `sites-available` and `sites-enabled`.
+The `aptly-server` role may install nginx if needed, but it must not overwrite the apt-cacher-ng nginx site. Multiple nginx sites should coexist under `sites-available` and `sites-enabled`.
 
 ## Split-Host Topologies
 
@@ -780,7 +780,7 @@ aptly_server_ip: 192.168.200.2
 aptly_acng_proxy_url: http://apt-cache.provcont.lan:3142
 ```
 
-Keep DNS or managed `/etc/hosts` entries aligned with those two IPs. The cache host must run `apt_cacher_ng` and `nginx_acng_reverse_proxy`; the aptly host must run `aptly_server`.
+Keep DNS or managed `/etc/hosts` entries aligned with those two IPs. The cache host must run `apt-cacher-ng` and `nginx-acng-reverse-proxy`; the aptly host must run `aptly-server`.
 
 Certificate handling needs one deliberate choice in split-host deployments:
 
@@ -806,8 +806,8 @@ Create `playbooks/apt_cache_server.yml`:
 - hosts: apt_cache_servers
   become: true
   roles:
-    - role: apt_cacher_ng
-    - role: nginx_acng_reverse_proxy
+    - role: apt-cacher-ng
+    - role: nginx-acng-reverse-proxy
 ```
 
 Create `playbooks/aptly_server.yml`:
@@ -816,7 +816,7 @@ Create `playbooks/aptly_server.yml`:
 - hosts: aptly_servers
   become: true
   roles:
-    - role: aptly_server
+    - role: aptly-server
 ```
 
 Create `playbooks/apt_cache_clients.yml`:
@@ -825,7 +825,7 @@ Create `playbooks/apt_cache_clients.yml`:
 - hosts: apt_cache_clients
   become: true
   roles:
-    - role: apt_cache_client
+    - role: apt-cache-client
 ```
 
 ## Client Host Variables

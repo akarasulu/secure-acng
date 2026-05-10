@@ -1,5 +1,5 @@
 - hosts: apt_cache_servers
   become: true
   roles:
-    - role: apt_cacher_ng
-    - role: nginx_acng_reverse_proxy
+    - role: apt-cacher-ng
+    - role: nginx-acng-reverse-proxy
